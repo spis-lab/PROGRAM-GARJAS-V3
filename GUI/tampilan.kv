@@ -1,0 +1,118 @@
+#:kivy 2.0.0
+#:import Screen kivy.uix.screenmanager.Screen
+#:import ScreenManager kivy.uix.screenmanager.ScreenManager
+
+
+ScreenManager:
+    id: screen_manager
+    Screen:
+        name: 'splash'
+        BoxLayout:
+            orientation: 'horizontal'
+            pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+            Image:
+                source: 'GUI/logo/download.png'  # Ganti dengan gambar splash screen Anda
+                size_hint_y: None
+                pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+                height: '100dp'
+            
+            Image:
+                source: 'GUI/logo/download (1).png'  # Ganti dengan gambar splash screen Anda
+                size_hint_y: None
+                pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+                height: '100dp'
+            
+            Image:
+                source: 'GUI/logo/telyu_horizon.jpg'  # Ganti dengan gambar splash screen Anda
+                size_hint_y: None
+                pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+                height: '80dp'
+
+    Screen:
+        name: 'main'
+        size: '800dp','480dp'
+        MDBoxLayout:
+            orientation: 'vertical'
+            padding: ('10dp', '10dp', '10dp', '10dp')
+
+            MDCard:
+                size_hint: 1, 4
+                pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+                md_bg_color: 0.2, 0.4, 0.6, 1  # Warna latar belakang dalam format RGBA
+                radius: [10, 10, 10, 10]  # Atur sudut (radius) sesuai keinginan Anda
+                BoxLayout:
+                    orientation: 'vertical'
+                    padding: "8dp"
+                    Label:
+                        text: "Deteksi Olahraga"
+                        size_hint_y: 0.5
+                        height: "30dp"
+            MDBoxLayout:
+                orientation: 'horizontal'
+                size_hint_y:None
+                padding: ('0dp', '0dp', '0dp', '0dp')
+                MDBoxLayout:
+                    orientation:'horizontal'
+                    pos_hint: {'center_x': 0.1, 'center_y': 0.5}
+                    Image:
+                        source: 'GUI/logo/download.png'  # Ganti dengan gambar splash screen Anda
+                        size_hint_y: None
+                        size_hint_x: None
+                        padding: ('5dp', '5dp', '5dp', '5dp')
+                        pos_hint: {'center_x': 0.1, 'center_y': 0.2}
+                        height: '50dp'
+                    
+                    Image:
+                        source: 'GUI/logo/download (1).png'  # Ganti dengan gambar splash screen Anda
+                        size_hint_y: None
+                        size_hint_x: None
+                        padding: ('5dp', '5dp', '5dp', '5dp')
+                        pos_hint: {'center_x': 0.1, 'center_y': 0.2}
+                        height: '50dp'
+                    
+                    Image:
+                        source: 'GUI/logo/telyu_horizon.jpg'  # Ganti dengan gambar splash screen Anda
+                        size_hint_y: None
+                        size_hint_x: None
+                        padding: ('5dp', '5dp', '5dp', '5dp')
+                        pos_hint: {'center_x': 0.1, 'center_y': 0.2}
+                        height: '30dp'
+                MDBoxLayout:
+                    orientation:'horizontal'
+                    pos_hint: {'center_x': 1, 'center_y': 0.5}
+                    MDRaisedButton:
+                        pos_hint: {'center_x': 1, 'center_y': 0.2}
+                        text: "Push up"
+                        size_hint: 0.1, None
+                        md_bg_color: 0.2, 0.4, 0.6, 1  # Warna latar belakang dalam format RGBA (contoh: #FF5733)
+                        radius: [20, 20, 20, 20]  # Atur radius sesuai keinginan Anda
+                        on_release: app.button_pressed('push-up', 'pose_estimation')
+                    
+                    MDRaisedButton:
+                        pos_hint: {'center_x': 1, 'center_y': 0.2}
+                        text: "Sit up"
+                        size_hint: 0.1, None
+                        md_bg_color: 0.2, 0.4, 0.6, 1  # Warna latar belakang dalam format RGBA (contoh: #FF5733)
+                        radius: [20, 20, 20, 20]  # Atur radius sesuai keinginan Anda
+                        on_release: app.button_pressed('sit-up', 'pose_estimation')
+                    
+                    MDRaisedButton:
+                        pos_hint: {'center_x': 1, 'center_y': 0.2}
+                        text: "Pull up"
+                        size_hint: 0.1, None
+                        md_bg_color: 0.2, 0.4, 0.6, 1  # Warna latar belakang dalam format RGBA (contoh: #FF5733)
+                        radius: [20, 20, 20, 20]  # Atur radius sesuai keinginan Anda
+                        on_release: app.button_pressed('pull-up', 'pose_estimation')
+
+    Screen:
+        name: 'pose_estimation'
+        MyBoxLayout:
+            id: pose_estimation_layout
+            MDRaisedButton:
+                text: 'Kembali'
+                size_hint: 0.1, None
+                md_bg_color: 0.2, 0.4, 0.6, 1
+                radius: [20, 20, 20, 20]
+                on_release: app.root.current = 'main'
+
+            
