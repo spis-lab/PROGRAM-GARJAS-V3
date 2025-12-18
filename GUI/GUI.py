@@ -1,105 +1,224 @@
 import numpy as np
 import cv2
-from kivy.lang import Builder
-from kivy.uix.label import Label
-from kivymd.app import MDApp
-from kivy.clock import Clock
-from kivy.uix.boxlayout import BoxLayout
-from kivy.uix.image import Image
-from kivy.graphics.texture import Texture
-from GUI.pose_estimation import pose_estimation
-from kivymd.uix.button import MDRaisedButton
+import tkinter as tk
+from tkinter import ttk
+from PIL import Image, ImageTk
 import pandas as pd
 from datetime import datetime
+import threading
+from GUI.pose_estimation import pose_estimation
 
-class GUI(MDApp):
-    def build(self):
-        self.title = "Aplikasi Deteksi Olahraga"
-        self.theme_cls.primary_palette = "Blue"
-        self.theme_cls.theme_style = "Light"
-        return Builder.load_file('GUI/tampilan.kv')
-
-    def on_start(self):
-        Clock.schedule_once(self.change_to_main, 3)
-
-    def change_to_main(self, dt):
-        self.root.current = 'main'
-    
-    def button_pressed(self, button_text, screen_name):
-        print(f"Button {button_text} pressed, changing screen to {screen_name}")
-        self.root.current = screen_name
-        self.root.ids.pose_estimation_layout.update_button_text(button_text)
-
-class MyBoxLayout(BoxLayout):
-    def __init__(self, **kwargs):
-        super(MyBoxLayout, self).__init__(**kwargs)
-        self.orientation = 'vertical'
+class SportsDetectionApp:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("Aplikasi Deteksi Olahraga")
+        self.root.geometry("1000x700")
+        self.root.configure(bg='#f0f0f0')
+        
+        # Variables
         self.is_paused = False
         self.countfrom = 0
         self.iscount = False
-        self.image_widget = Image()
-        self.add_widget(self.image_widget)
-        self.pose_estimator = pose_estimation()  # Gunakan instance PoseEstimation yang sudah dibuat
         self.button_text = None
-        Clock.schedule_interval(self.update_frame, 1.0 / 30.0)
-
-        button_layout = BoxLayout(orientation='horizontal', size_hint=(1, None))
-
-
-        # Tambahkan tombol pause
-        self.pause_button = MDRaisedButton(
-            text='Pause',
-            size_hint=(0.1, None),
-            md_bg_color=(0.2, 0.4, 0.6, 1),
-            radius=[20, 20, 20, 20]
-        )
-        self.pause_button.bind(on_release=self.toggle_pause)
-        button_layout.add_widget(self.pause_button)
-
-        # Tambahkan tombol untuk menampilkan/menyembunyikan counter
-        self.toggle_counter_button = MDRaisedButton(
-            text='Start',
-            size_hint=(0.1, None),
-            md_bg_color=(0.2, 0.4, 0.6, 1),
-            radius=[20, 20, 20, 20]
-        )
-        self.toggle_counter_button.bind(on_release=self.toggle_counter)
-        button_layout.add_widget(self.toggle_counter_button)
-
-        # Tambahkan button_layout ke MyBoxLayout
-        self.add_widget(button_layout)
-
-
-    def toggle_pause(self, instance):
-        self.is_paused = not self.is_paused
-        self.pause_button.text = 'Resume' if self.is_paused else 'Pause'
-
-    def update_button_text(self, button_text):
-        self.button_text = button_text
         self.arr = pd.DataFrame()
-
-    def toggle_counter(self, instance):
-        self.iscount = not self.iscount
-        if(self.countfrom is not 0 and self.iscount == False):
-            newrow = pd.DataFrame([{self.button_text:self.countfrom}])
-            self.arr = pd.concat([self.arr,newrow], ignore_index=False)
-            self.arr.to_csv(str(datetime.now().strftime("%Y-%m-%d"))+'.csv',index = False)
-        self.countfrom = 0
-        self.toggle_counter_button.text = 'Start' if not self.iscount else 'Stop'
-
-
-    def update_frame(self, dt):
-        if not self.is_paused:
-            frame,self.countfrom = self.pose_estimator.detect_face_and_predict(self.button_text,self.countfrom,self.iscount)
-            frame = cv2.flip(frame, 0)
-            frame_rgb = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
-            texture = Texture.create(size=(frame.shape[1], frame.shape[0]), colorfmt='rgb')
-            texture.blit_buffer(frame_rgb.tobytes(), colorfmt='rgb', bufferfmt='ubyte')
-            self.image_widget.texture = texture
-        else:
-            self.image_widget.text = "Video is paused"
+        self.pose_estimator = pose_estimation()
+        self.running = True
         
-
-    def on_stop(self):
-        self.pose_estimator.release()
+        # Show splash screen
+        self.show_splash()
+        
+    def show_splash(self):
+        """Tampilan splash screen selama 3 detik"""
+        splash_frame = tk.Frame(self.root, bg='#2196F3')
+        splash_frame.pack(fill='both', expand=True)
+        
+        title = tk.Label(
+            splash_frame, 
+            text="Aplikasi Deteksi Olahraga", 
+            font=('Arial', 32, 'bold'),
+            bg='#2196F3',
+            fg='white'
+        )
+        title.pack(expand=True)
+        
+        # Otomatis pindah ke menu utama setelah 3 detik
+        self.root.after(3000, lambda: self.show_main_menu(splash_frame))
+        
+    def show_main_menu(self, previous_frame):
+        """Menu utama untuk memilih jenis olahraga"""
+        previous_frame.destroy()
+        
+        main_frame = tk.Frame(self.root, bg='#f0f0f0')
+        main_frame.pack(fill='both', expand=True, padx=20, pady=20)
+        
+        title = tk.Label(
+            main_frame, 
+            text="Pilih Jenis Olahraga", 
+            font=('Arial', 24, 'bold'),
+            bg='#f0f0f0'
+        )
+        title.pack(pady=30)
+        
+        # Contoh tombol olahraga - sesuaikan dengan kebutuhan
+        sports = ['Push Up', 'Sit Up', 'Squat', 'Plank']
+        
+        button_frame = tk.Frame(main_frame, bg='#f0f0f0')
+        button_frame.pack(expand=True)
+        
+        for sport in sports:
+            btn = tk.Button(
+                button_frame,
+                text=sport,
+                font=('Arial', 16),
+                bg='#2196F3',
+                fg='white',
+                activebackground='#1976D2',
+                activeforeground='white',
+                width=15,
+                height=2,
+                cursor='hand2',
+                command=lambda s=sport, f=main_frame: self.start_detection(s, f)
+            )
+            btn.pack(pady=10)
     
+    def start_detection(self, sport_name, previous_frame):
+        """Mulai deteksi pose dengan webcam"""
+        previous_frame.destroy()
+        
+        self.button_text = sport_name
+        self.arr = pd.DataFrame()
+        
+        # Main detection frame
+        detection_frame = tk.Frame(self.root, bg='#f0f0f0')
+        detection_frame.pack(fill='both', expand=True)
+        
+        # Header
+        header = tk.Label(
+            detection_frame,
+            text=f"Deteksi: {sport_name}",
+            font=('Arial', 20, 'bold'),
+            bg='#f0f0f0'
+        )
+        header.pack(pady=10)
+        
+        # Video display
+        self.video_label = tk.Label(detection_frame, bg='black')
+        self.video_label.pack(pady=10)
+        
+        # Counter display
+        self.counter_label = tk.Label(
+            detection_frame,
+            text=f"Counter: {self.countfrom}",
+            font=('Arial', 18),
+            bg='#f0f0f0'
+        )
+        self.counter_label.pack(pady=5)
+        
+        # Control buttons
+        control_frame = tk.Frame(detection_frame, bg='#f0f0f0')
+        control_frame.pack(pady=10)
+        
+        self.pause_button = tk.Button(
+            control_frame,
+            text='Pause',
+            font=('Arial', 12),
+            bg='#FF9800',
+            fg='white',
+            width=10,
+            command=self.toggle_pause
+        )
+        self.pause_button.pack(side='left', padx=5)
+        
+        self.start_button = tk.Button(
+            control_frame,
+            text='Start',
+            font=('Arial', 12),
+            bg='#4CAF50',
+            fg='white',
+            width=10,
+            command=self.toggle_counter
+        )
+        self.start_button.pack(side='left', padx=5)
+        
+        back_button = tk.Button(
+            control_frame,
+            text='Kembali',
+            font=('Arial', 12),
+            bg='#F44336',
+            fg='white',
+            width=10,
+            command=lambda: self.go_back(detection_frame)
+        )
+        back_button.pack(side='left', padx=5)
+        
+        # Start video update loop
+        self.update_video()
+    
+    def toggle_pause(self):
+        """Toggle pause/resume video"""
+        self.is_paused = not self.is_paused
+        self.pause_button.config(text='Resume' if self.is_paused else 'Pause')
+    
+    def toggle_counter(self):
+        """Toggle start/stop counter"""
+        self.iscount = not self.iscount
+        
+        if self.countfrom != 0 and not self.iscount:
+            # Simpan data ke CSV
+            newrow = pd.DataFrame([{self.button_text: self.countfrom}])
+            self.arr = pd.concat([self.arr, newrow], ignore_index=False)
+            filename = f"{datetime.now().strftime('%Y-%m-%d')}.csv"
+            self.arr.to_csv(filename, index=False)
+            print(f"Data disimpan ke {filename}")
+        
+        self.countfrom = 0 if not self.iscount else self.countfrom
+        self.start_button.config(text='Stop' if self.iscount else 'Start')
+        
+    def update_video(self):
+        """Update video frame"""
+        if not self.is_paused and self.running:
+            frame, self.countfrom = self.pose_estimator.detect_face_and_predict(
+                self.button_text, 
+                self.countfrom, 
+                self.iscount
+            )
+            
+            # Convert frame untuk Tkinter
+            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            frame = cv2.resize(frame, (640, 480))
+            
+            img = Image.fromarray(frame)
+            imgtk = ImageTk.PhotoImage(image=img)
+            
+            self.video_label.imgtk = imgtk
+            self.video_label.configure(image=imgtk)
+            
+            # Update counter display
+            self.counter_label.config(text=f"Counter: {self.countfrom}")
+        
+        # Schedule next update (30 FPS)
+        if self.running:
+            self.root.after(33, self.update_video)
+    
+    def go_back(self, current_frame):
+        """Kembali ke menu utama"""
+        current_frame.destroy()
+        self.is_paused = False
+        self.countfrom = 0
+        self.iscount = False
+        self.show_main_menu(tk.Frame(self.root))
+        
+    def on_closing(self):
+        """Cleanup saat aplikasi ditutup"""
+        self.running = False
+        self.pose_estimator.release()
+        self.root.destroy()
+
+def main():
+    root = tk.Tk()
+    app = SportsDetectionApp(root)
+    root.protocol("WM_DELETE_WINDOW", app.on_closing)
+    root.mainloop()
+
+if __name__ == "__main__":
+    main()
